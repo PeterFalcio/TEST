@@ -15,8 +15,8 @@ struct Trace {
 };
 
 std::vector<Trace> calculateTraces(std::vector<Fracture> fractures) {
-    std::vector<Trace> traces;
-    for (size_t i = 0; i < fractures.size(); ++i) {
+    std::vector<Trace> traces;  //Crea un vettore vuoto che conterrà tutte le tracce
+    for (size_t i = 0; i < fractures.size(); ++i) {   // Ciclo esterno che itera su tutte le fratture
         for (size_t j = i + 1; j < fractures.size(); ++j) {
             Trace trace;
             trace.id = traces.size() + 1;
