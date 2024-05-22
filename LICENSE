@@ -51,13 +51,6 @@ void writeTracesToFile(const std::vector<Trace>& traces, const std::string& file
 }
 
 int main() {
-    std::vector<std::string> files = {"FR3_data", "FR10_data", "FR50_data", "FR82_data"};
-    for (const auto& file : files) {
-        std::ifstream inFile(file);
-        if (!inFile.is_open()) {
-            std::cerr << "Error: Unable to open file " << file << std::endl;
-            continue;
-        }
 
         std::vector<Fracture> fractures;
         Fracture fracture;
