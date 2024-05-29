@@ -69,3 +69,174 @@ int main() {
     return 0;
 }
 
+
+
+
+
+#include <iostream>
+#include <vector>
+#include <array>
+#include <optional>
+#include <cmath>
+
+struct Punto {
+    double x, y, z;
+};
+
+struct Frattura {
+    int id;
+    std::vector<Punto> vertici;
+};
+
+struct Traccia {
+    int id;
+    int fratturaId1;
+    int fratturaId2;
+    Punto punto1;
+    Punto punto2;
+};
+
+// Funzione di utilità per calcolare il vettore normale di un piano definito da tre punti
+Punto calcolaNormale(const Punto& p1, const Punto& p2, const Punto& p3) {
+    Punto u = {p2.x - p1.x, p2.y - p1.y, p2.z - p1.z};
+    Punto v = {p3.x - p1.x, p3.y - p1.y, p3.z - p1.z};
+    Punto normale = {
+        u.y * v.z - u.z * v.y,
+        u.z * v.x - u.x * v.z,
+        u.x * v.y - u.y * v.x
+    };
+    return normale;
+}
+
+// Funzione per calcolare il prodotto scalare tra due vettori
+double dotProduct(const Punto& u, const Punto& v) {
+    return u.x * v.x + u.y * v.y + u.z * v.z;
+}
+
+// Funzione per calcolare l'intersezione di un segmento con un piano
+std::optional<Punto> intersezioneSegmentoPiano(const Punto& p1, const Punto& p2, const Punto& normale, double d) {
+    Punto direction = {p2.x - p1.x, p2.y - p1.y, p2.z - p1.z};
+    double dot1 = dotProduct(normale, p1);
+    double dot2 = dotProduct(normale, p2);
+    double t = (d - dot1) / (dot2 - dot1);
+    if (t >= 0.0 && t <= 1.0) {
+        return Punto{
+            p1.x + t * direction.x,
+            p1.y + t * direction.y,
+            p1.z + t * direction.z
+        };
+    }
+    return std::nullopt;
+}
+
+// Funzione per verificare se un punto è all'interno di un poligono (approssimazione)
+bool puntoDentroPoligono(const Punto& punto, const std::vector<Punto>& vertici, const Punto& normale) {
+    for (size_t i = 0; i < vertici.size(); ++i) {
+        Punto v1 = vertici[i];
+        Punto v2 = vertici[(i + 1) % vertici.size()];
+        Punto edge = {v2.x - v1.x, v2.y - v1.y, v2.z - v1.z};
+        Punto vp = {punto.x - v1.x, punto.y - v1.y, punto.z - v1.z};
+        Punto cross = {
+            edge.y * vp.z - edge.z * vp.y,
+            edge.z * vp.x - edge.x * vp.z,
+            edge.x * vp.y - edge.y * vp.x
+        };
+        if (dotProduct(cross, normale) < 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Funzione per calcolare le intersezioni tra due fratture
+std::vector<Punto> calcolaIntersezioni(const Frattura& frattura1, const Frattura& frattura2) {
+    std::vector<Punto> intersezioni;
+    
+    // Calcola il vettore normale e il termine d del piano per la prima frattura
+    Punto normale1 = calcolaNormale(frattura1.vertici[0], frattura1.vertici[1], frattura1.vertici[2]);
+    double d1 = dotProduct(normale1, frattura1.vertici[0]);
+    
+    // Calcola il vettore normale e il termine d del piano per la seconda frattura
+    Punto normale2 = calcolaNormale(frattura2.vertici[0], frattura2.vertici[1], frattura2.vertici[2]);
+    double d2 = dotProduct(normale2, frattura2.vertici[0]);
+    
+    // Trova le intersezioni dei segmenti della prima frattura con il piano della seconda frattura
+    for (size_t i = 0; i < frattura1.vertici.size(); ++i) {
+        Punto p1 = frattura1.vertici[i];
+        Punto p2 = frattura1.vertici[(i + 1) % frattura1.vertici.size()];
+        auto intersezione = intersezioneSegmentoPiano(p1, p2, normale2, d2);
+        if (intersezione && puntoDentroPoligono(*intersezione, frattura2.vertici, normale2)) {
+            intersezioni.push_back(*intersezione);
+        }
+    }
+    
+    // Trova le intersezioni dei segmenti della seconda frattura con il piano della prima frattura
+    for (size_t i = 0; i < frattura2.vertici.size(); ++i) {
+        Punto p1 = frattura2.vertici[i];
+        Punto p2 = frattura2.vertici[(i + 1) % frattura2.vertici.size()];
+        auto intersezione = intersezioneSegmentoPiano(p1, p2, normale1, d1);
+        if (intersezione && puntoDentroPoligono(*intersezione, frattura1.vertici, normale1)) {
+            intersezioni.push_back(*intersezione);
+        }
+    }
+    
+    return intersezioni;
+}
+
+std::vector<Frattura> inserisciFrattureManuali() {
+    std::vector<Frattura> fratture;
+    
+    // Frattura 0
+    Frattura frattura0;
+    frattura0.id = 0;
+    frattura0.vertici = {
+        {0.0, 0.0, 0.0},
+        {1.0, 0.0, 0.0},
+        {1.0, 1.0, 0.0},
+        {0.0, 1.0, 0.0}
+    };
+    fratture.push_back(frattura0);
+    
+    // Frattura 1
+    Frattura frattura1;
+    frattura1.id = 1;
+    frattura1.vertici = {
+        {0.8, 0.0, 0.0},
+        {0.8, 1.0, 0.0},
+        {-0.1, 0.3, 0.0},
+        {-0.1, -0.1, 0.0}
+    };
+    fratture.push_back(frattura1);
+    
+    // Frattura 2
+    Frattura frattura2;
+    frattura2.id = 2;
+    frattura2.vertici = {
+        {-0.237778, 0.5, -0.34444},
+        {0.3161837, 0.5, -0.34444},
+        {0.3161837, 0.5, 0.4528389},
+        {-0.237778, 0.5, 0.4528389}
+    };
+    fratture.push_back(frattura2);
+    
+    return fratture;
+}
+
+int main() {
+    std::vector<Frattura> fratture = inserisciFrattureManuali();
+    
+    for (size_t i = 0; i < fratture.size(); ++i) {
+        for (size_t j = i + 1; j < fratture.size(); ++j) {
+            auto intersezioni = calcolaIntersezioni(fratture[i], fratture[j]);
+            if (!intersezioni.empty()) {
+                std::cout << "Intersezioni tra frattura " << fratture[i].id << " e frattura " << fratture[j].id << ":\n";
+                for (const auto& intersezione : intersezioni) {
+                    std::cout << "Punto: (" << intersezione.x << ", " << intersezione.y << ", " << intersezione.z << ")\n";
+                }
+            }
+        }
+    }
+    
+    return 0;
+}
+
