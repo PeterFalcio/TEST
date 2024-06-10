@@ -159,7 +159,16 @@ int main()
             }
             cout << endl;
         }
+    
+ // Calcola le intersezioni tra le fratture
+    std::vector<Punto> intersezioni = calcolaIntersezioni(vertici1, normale1, vertici2, normale2);
+
+    // Stampa i risultati delle intersezioni
+    std::cout << "Intersezioni trovate:\n";
+    for (const auto& intersezione : intersezioni) {
+        std::cout << "Punto: (" << intersezione.x << ", " << intersezione.y << ", " << intersezione.z << ")\n";
     }
+
 
     return 0;
 }
